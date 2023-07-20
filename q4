@@ -1,0 +1,87 @@
+// Server Side
+
+import socket
+import threading
+import random
+
+quotes = [
+    "The only way to deal with all fears is to face them one by one. - Aristotle",
+    "Happiness is not an ideal of reason but of imagination. - Immanuel Kant",
+    "Simplicity is the ultimate sophistication. - Leonardo da Vinci",
+    "I think, therefore I am. - René Descartes",
+    "Injustice anywhere is a threat to justice everywhere. - Martin Luther King Jr.",
+    "Wealth consists not in having great possessions, but in having few wants. - Epictetus",
+    "I know that I am intelligent, because I know that I know nothing. - Socrates"
+]
+
+def handle_client(client_socket):
+    try:
+        while True:
+            quote = random.choice(quotes)
+
+            client_socket.send(quote.encode())
+
+
+            response = client_socket.recv(1024).decode().strip().lower()
+
+            if response != 'y':
+                break
+
+    except ConnectionResetError:
+        print("Client disconnected.")
+
+    client_socket.close()
+
+def main():
+    server_address = '0.0.0.0'
+    server_port = 8888
+
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+
+    server_socket.bind((server_address, server_port))
+
+    server_socket.listen(5)
+    print("QOTD Server is listening on", server_address, "port", server_port)
+
+    while True:
+        client_socket, client_address = server_socket.accept()
+        print("Connected to client at", client_address)
+
+        client_thread = threading.Thread(target=handle_client, args=(client_socket,))
+        client_thread.start()
+
+if __name__ == "__main__":
+    main()
+
+// Client Side
+
+import socket
+
+def main():
+    server_address = '192.168.182.131'
+    server_port = 8888
+
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    client_socket.connect((server_address, server_port))
+    print("Connected to server at", server_address, "port", server_port)
+
+    try:
+        while True:
+            quote = client_socket.recv(1024).decode()
+            print("Received Quote of the Day:", quote)
+
+            choice = input("Get another quote (y/n)? ").strip().lower()
+            if choice != 'y':
+                break
+
+            client_socket.send(choice.encode())
+
+    except ConnectionResetError:
+        print("Server disconnected.")
+
+    client_socket.close()
+
+if __name__ == "__main__":
+    main()
