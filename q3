@@ -1,0 +1,73 @@
+// Server Side
+
+import socket
+
+def convert_to_atmosphere(pressure_bar):
+    return pressure_bar * 0.986923
+
+def main():
+    server_address = '0.0.0.0'
+    server_port = 12345
+
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    server_socket.bind((server_address, server_port))
+
+    server_socket.listen(1)
+    print("Server is listening on", server_address, "port", server_port)
+
+    client_socket, client_address = server_socket.accept()
+    print("Connected to client at", client_address)
+
+    while True:
+        data = client_socket.recv(1024).decode()
+        if not data:
+            break
+
+        try:
+            pressure_bar = float(data)
+            atmosphere_standard = convert_to_atmosphere(pressure_bar)
+
+            client_socket.send(str(atmosphere_standard).encode())
+
+        except ValueError:
+            print("Invalid input from client:", data)
+
+    client_socket.close()
+    server_socket.close()
+
+if __name__ == "__main__":
+    main()
+
+// Client Side
+
+def main():
+    server_address = '192.168.182.131'
+    server_port = 12345
+
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    client_socket.connect((server_address, server_port))
+    print("Connected to server at", server_address, "port", server_port)
+
+    while True:
+        user_input = input("Enter pressure in bar (or 'q' to quit): ")
+        if user_input.lower() == 'q':
+            break
+
+        try:
+            pressure_bar = float(user_input)
+
+            client_socket.send(str(pressure_bar).encode())
+
+            atmosphere_standard = client_socket.recv(1024).decode()
+            print(f"Atmosphere Standard: {atmosphere_standard} atm")
+
+        except ValueError:
+            print("Invalid input. Please enter a valid number or 'q' to quit.")
+
+
+    client_socket.close()
+
+if __name__ == "__main__":
+    main()
